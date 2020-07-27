@@ -42,14 +42,20 @@ namespace consul_jsonify
             process.WaitForExit();
 
             var parser = new ConsulParser();
-            var configs = parser.Parse(output);
+            var configs = parser.Parse(output, out var lines);
 
             if (configs.Count > 0)
             {
-                Console.WriteLine(output);
                 Debug.WriteLine(output);
+                Console.WriteLine($"Found {configs.Count} config keys / {lines} lines of kv");
+                Console.Write("Enter output file name (leave empty for default): ");
+                var filename = Console.ReadLine();
+                if (string.IsNullOrWhiteSpace(filename))
+                {
+                    filename = "consul";
+                }
 
-                Console.WriteLine("Saving output...");
+                filename += "_" + DateTime.Now.ToString("ddMMyyyyhhmmss") + ".json";
 
                 // remove duplicate key and convert to dictionary for better json output
                 var jsonFormat = configs
@@ -63,7 +69,7 @@ namespace consul_jsonify
                     Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
                 });
 
-                File.WriteAllText("consul.json", json);
+                File.WriteAllText(filename, json);
             }
             else
             {

@@ -7,8 +7,9 @@ namespace consul_jsonify
 {
     public class ConsulParser
     {
-        public List<ConsulKv> Parse(string config)
+        public List<ConsulKv> Parse(string config, out int lineCount)
         {
+            lineCount = 0;
             if (string.IsNullOrWhiteSpace(config))
             {
                 return new List<ConsulKv>();
@@ -20,20 +21,25 @@ namespace consul_jsonify
                 return new List<ConsulKv>();
             }
 
-            var kvLines = lines.Where(line => line.StartsWith("Key ") || line.StartsWith("Value ")).ToList();
-            var lineCount = kvLines.Count;
+            var kvLines = lines.Where(line => line.StartsWith("Key") || line.StartsWith("Value")).ToList();
+            lineCount = kvLines.Count;
             var configs = new List<ConsulKv>();
+
+            Debug.WriteLine($"Total {lineCount} key/value lines / {lines.Length} total lines");
 
             var keyPattern = new Regex(@"^Key\s*(\S*)$");
             var valuePattern = new Regex(@"^Value\s*(\S*)$");
 
             for (int i = 0; i < lineCount - 1; i += 2)
             {
-                var key = keyPattern.Match(kvLines[i]);
-                var value = valuePattern.Match(kvLines[i + 1]);
+                var keyConfig = kvLines[i];
+                var valueConfig = kvLines[i + 1];
+                var key = keyPattern.Match(keyConfig);
+                var value = valuePattern.Match(valueConfig);
 
                 if (!key.Success)
                 {
+                    Debug.WriteLine($"Line {keyConfig} has no valid key");
                     continue;
                 }
 
